@@ -16,8 +16,6 @@ final class Phase1AlarmCoordinator {
         case denied = "Denegado"
     }
 
-    private let alarmManager = AlarmManager.shared
-
     var authStatus: AuthStatus = .notDetermined
     var scheduledAlarmID: UUID?
     var scheduledFireDate: Date?
@@ -31,7 +29,7 @@ final class Phase1AlarmCoordinator {
     }
 
     func refreshAuthorizationState() {
-        switch alarmManager.authorizationState {
+        switch AlarmManager.shared.authorizationState {
         case .notDetermined:
             authStatus = .notDetermined
         case .authorized:
@@ -46,7 +44,7 @@ final class Phase1AlarmCoordinator {
     func requestAuthorization() async {
         errorMessage = nil
         do {
-            let state = try await alarmManager.requestAuthorization()
+            let state = try await Self.requestAlarmAuthorization()
             switch state {
             case .authorized:
                 authStatus = .authorized
@@ -68,7 +66,7 @@ final class Phase1AlarmCoordinator {
         errorMessage = nil
         statusMessage = nil
 
-        if alarmManager.authorizationState == .notDetermined {
+        if AlarmManager.shared.authorizationState == .notDetermined {
             await requestAuthorization()
         } else {
             refreshAuthorizationState()
@@ -80,7 +78,7 @@ final class Phase1AlarmCoordinator {
         }
 
         if let existingID = scheduledAlarmID {
-            try? alarmManager.cancel(id: existingID)
+            try? AlarmManager.shared.cancel(id: existingID)
         }
 
         let alarmID = UUID()
@@ -120,7 +118,7 @@ final class Phase1AlarmCoordinator {
         )
 
         do {
-            _ = try await alarmManager.schedule(id: alarmID, configuration: configuration)
+            try await Self.scheduleAlarm(id: alarmID, configuration: configuration)
             scheduledAlarmID = alarmID
             scheduledFireDate = fireDate
             lastOpenedAlarmLabel = nil
@@ -135,7 +133,7 @@ final class Phase1AlarmCoordinator {
         errorMessage = nil
         guard let id = scheduledAlarmID else { return }
         do {
-            try alarmManager.cancel(id: id)
+            try AlarmManager.shared.cancel(id: id)
             scheduledAlarmID = nil
             scheduledFireDate = nil
             statusMessage = "Alarma de prueba cancelada."
@@ -146,12 +144,23 @@ final class Phase1AlarmCoordinator {
 
     func handleAlarmOpenedFromSystem(alarmID: String, label: String) {
         if let uuid = UUID(uuidString: alarmID) {
-            try? alarmManager.stop(id: uuid)
+            try? AlarmManager.shared.stop(id: uuid)
         }
         scheduledAlarmID = nil
         scheduledFireDate = nil
         lastOpenedAlarmLabel = label
         lastOpenedAt = Date()
         statusMessage = "¡AlarmKit abrió AlarmaMy correctamente! En Fase 3 y 4 acá arrancarán tus misiones."
+    }
+
+    nonisolated private static func requestAlarmAuthorization() async throws -> AlarmManager.AuthorizationState {
+        try await AlarmManager.shared.requestAuthorization()
+    }
+
+    nonisolated private static func scheduleAlarm(
+        id: UUID,
+        configuration: sending AlarmManager.AlarmConfiguration<AlarmaMetadata>
+    ) async throws {
+        _ = try await AlarmManager.shared.schedule(id: id, configuration: configuration)
     }
 }
