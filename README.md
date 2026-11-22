@@ -55,3 +55,4 @@ Luego elegí una de estas dos opciones con tu **cuenta Apple gratuita**:
 3. Activá **Modo Silencio** (y opcionalmente **No Molestar**) y **bloqueá la pantalla** del iPhone 15.
 4. A los 15 segundos debería sonar la alarma nativa de `AlarmKit`.
 5. Tocá **Abrir misiones** y verificá que **AlarmaMy** se abra al frente mostrando el cartel verde de confirmación.
+# Alarma_sin_paywalls
